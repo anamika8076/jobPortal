@@ -1,15 +1,13 @@
-
 import app from "./app.js";
 
-
-import dotenv from "dotenv"
+import dotenv from "dotenv";
 import { sql } from "./utils/db.js";
 
 dotenv.config();
 
 async function initDB() {
-    try {
-        await sql`
+  try {
+    await sql`
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'job_type') THEN
@@ -23,7 +21,7 @@ async function initDB() {
                 END IF;
                 END$$;
         `;
-        await sql`
+    await sql`
         CREATE TABLE IF NOT EXISTS companies (
             company_id SERIAL PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
@@ -31,12 +29,12 @@ async function initDB() {
             website VARCHAR(255) NOT NULL,
             logo VARCHAR(255) NOT NULL,
             logo_public_id VARCHAR(255) NOT NULL,
-            recruiter_id INTEGER NOT NULL
-            created_at TIMESTAMP DEFAULT NOT NULL CURRENT_TIMESTAMP,
+            recruiter_id INTEGER NOT NULL,
+created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
         `;
 
-        await sql`
+    await sql`
         CREATE TABLE IF NOT EXISTS jobs (
             job_id SERIAL PRIMARY KEY,
             title VARCHAR(255) NOT NULL,
@@ -49,10 +47,10 @@ async function initDB() {
             work_location work_location NOT NULL,
             company_id INTEGER NOT NULL REFERENCES companies(company_id) ON DELETE CASCADE,
             posted_by_recruiter_id INTEGER NOT NULL,
-            created_at TIMESTAMPZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             is_active BOOLEAN DEFAULT true )
             `;
-        await sql`
+    await sql`
         CREATE TABLE IF NOT EXISTS applications (
             application_id SERIAL PRIMARY KEY,
             job_id INTEGER NOT NULL REFERENCES jobs(job_id) ON DELETE CASCADE,
@@ -60,24 +58,19 @@ async function initDB() {
             applicant_email VARCHAR(255) NOT NULL,
             status application_status NOT NULL DEFAULT 'Submitted',
             resume VARCHAR(255) NOT NULL,
-            applied_at TIMESTAMPZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             subscribed BOOLEAN,
             UNIQUE(job_id, applicant_id)
         )  `;
-        console.log("Database initialized successfully");
-    } catch (error) {
-        console.log("error  while initializing database", error);
-        process.exit(1);
-        
-    }
+    console.log("Database initialized successfully");
+  } catch (error) {
+    console.log("error  while initializing database", error);
+    process.exit(1);
+  }
 }
 
 initDB().then(() => {
-    app.listen(process.env.PORT, () => {
-      console.log(`Job service is running on port ${process.env.PORT}`);
-    });
-    
-})
-
-
-
+  app.listen(process.env.PORT, () => {
+    console.log(`Job service is running on port ${process.env.PORT}`);
+  });
+});
