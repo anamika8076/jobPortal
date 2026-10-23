@@ -105,3 +105,59 @@ export const createJob = TryCatch(async (req: AuthenticatedRequest, res) => {
     });
 
 })
+
+
+export const updateJob = TryCatch(async (req: AuthenticatedRequest, res) => {
+  const user = req.user;
+  if (!user) {
+    throw new ErrorHandler(401, "Unauthorized");
+  }
+  if (user.role !== "recruiter") {
+    throw new ErrorHandler(403, "Forbidden: Only recruiters can create jobs");
+  }
+  const {
+    title,
+    description,
+    salary,
+    location,
+    job_type,
+    openings,
+    role,
+    work_location,
+    company_id,
+    is_active,
+  } = req.body;
+
+  // ADD THESE LOGS HERE
+  console.log("JOB ID:", req.params.jobId);
+  console.log("IS ACTIVE:", req.body.is_active);
+  console.log("BODY:", req.body);
+
+  const [existingJob] =
+    await sql`SELECT posted_by_recruiter_id FROM jobs WHERE job_id=${req.params.jobId} `;
+  if (!existingJob) {
+    throw new ErrorHandler(404, "Job not found");
+  }
+  if (existingJob.posted_by_recruiter_id !== user.user_id) {
+    throw new ErrorHandler(
+      403,
+      "Forbidden: You are not authorized to update this job",
+    );
+  }
+  const [updatedJob] = await sql`UPDATE jobs SET title=${title},
+    description=${description},
+    salary=${salary}, 
+    location=${location}, 
+    job_type=${job_type}, 
+    openings=${openings}, 
+    role=${role}, 
+    company_id=${company_id},
+    work_location=${work_location}, 
+    is_active=${is_active} 
+    WHERE job_id=${req.params.jobId} RETURNING *;`;
+
+  res.json({
+    message: "Job updated successfully",
+    job: updatedJob,
+  });
+})
