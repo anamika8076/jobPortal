@@ -165,3 +165,65 @@ export const deleteSkillFromUser = TryCatch(
     res.json({ message: `Skill ${skillName.trim()} deleted successfully` });
   },
 );
+
+export const applyForJob = TryCatch(async (req: AuthenticatedRequest, res) => { 
+  const user = req.user;
+  if (!user) {
+    throw new ErrorHandler(401, "Unauthorized");
+  }
+  if (user.role !== "jobseeker") {
+    throw new ErrorHandler(403,"Forbidden you are not allowed for this api")
+  }
+  const applicant_id= user.user_id
+  const resume = user.resume
+  if (!resume) {
+    throw new ErrorHandler(400,"u need to add resume in ur profile to apply for this role")
+  }
+  const { job_id } = req.body
+  if (!job_id) {
+    throw new ErrorHandler(404, "job id is required")
+    
+  }
+
+  const [job] = await sql`SELECT is_active FROM jobs WHERE job_id =${job_id}`;
+  if (!job) {
+    throw new ErrorHandler(404, "no jobs with this id")
+    
+  }
+  if (!job.is_active) {
+    throw new ErrorHandler(400, "job is not active")
+    
+  }
+  
+  let newApplication;
+  try {
+    [newApplication]=await sql `INSERT INTO applications (job_id,applicant_id,applicant_email,resume) VALUES (${job_id}, ${applicant_id}, ${user?.email}, ${resume})`
+    
+  } catch (error: any) {
+    if (error.code === "2305") {
+      throw new ErrorHandler(409,"you have already applied to this job")
+    }
+    throw Error
+    
+  } 
+  res.json({
+    message: "applied for job successfully",
+    application:newApplication,
+  })
+  
+
+
+  
+    
+})
+
+
+export const getAllapplications = TryCatch(async (req: AuthenticatedRequest, res) => {
+  const applications = await sql`
+  SELECT a.*, j.title AS job_title,j.salary AS job_salary, j.location AS job_location FROM applications a JOIN jobs j ON a.job_id=j.job_id WHERE a.applicant_id =${req.user?.user_id}
+  `;
+
+  res.json(applications)
+  
+})
+
