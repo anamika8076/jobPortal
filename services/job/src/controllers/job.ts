@@ -1,4 +1,6 @@
 import { AuthenticatedRequest } from "../middleware/auth.js";
+import { publishToKafka } from "../producer.js";
+import { applicationStatusUpdateTemplate } from "../template.js";
 import getBuffer from "../utils/buffer.js";
 import { sql } from "../utils/db.js";
 import ErrorHandler from "../utils/errorHandler.js";
@@ -260,5 +262,44 @@ export const getAllApplicationForJob=TryCatch(async(req:AuthenticatedRequest,res
   }
   const applications=await sql `SELECT * FROM applications WHERE job_id= ${jobId} ORDER BY  applied_at ASC `;
   res.json(applications)
+
+})
+
+export const updateApplication=TryCatch(async(req:AuthenticatedRequest,res)=>{
+  
+  const user = req.user;
+  if (!user) {
+    throw new ErrorHandler(401, "Unauthorized");
+  }
+  if (user.role !== "recruiter") {
+    throw new ErrorHandler(403, "Forbidden: Only recruiters can access ");
+  }
+
+  const {id}=req.params
+const [application]=await sql `SELECT * FROM applications WHERE application_id=${id}`;
+if(!application){
+  throw new ErrorHandler(404, "Application not found")
+}
+const [job]=await sql `SELECT posted_by_recruiter_id , title FROM jobs WHERE job_id =${application.job_id}`;
+if (!job){
+  throw new ErrorHandler(404, "no job with id" )
+}
+if(job.posted_by_recruiter_id !== user.user_id){
+  throw new ErrorHandler(403,"forbidden you are not allowed  ")
+}
+const [updatedApplication]=await sql `UPDATE applications SET status = ${req.body.status} WHERE application_id=${id} RETURNING *`;
+const message ={
+  to:application.applicant_email,
+  subject:"Application update-Hirely",
+  html:applicationStatusUpdateTemplate(job.title),
+}
+publishToKafka("send-mail",message).catch(error=>{
+  console.error("failed to publish messsage to kafka",error)
+})
+res.json({
+  message:'application updated',
+  job,
+  updatedApplication
+})
 
 })

@@ -96,7 +96,7 @@ export const forgotPassword = TryCatch(async (req, res, next) => {
     });
     const message = {
         to: email,
-        subject: "RESET your password - hireheaven",
+        subject: "RESET your password - hirely",
         html: forgotPasswordTemplate(resetLink),
     };
     publishToKafka("send-mail", message).catch((error) => {
