@@ -1,4 +1,17 @@
 {
+  "name": "hirely-backend",
+  "version": "1.0.0",
+  "description": "HireHeaven Microservices Backend Root",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -c \"blue.bold,magenta.bold,green.bold,yellow.bold\" -n \"AUTH,UTILS,USER,JOB\" --kill-others \"npm --prefix services/auth run dev\" \"npm --prefix services/utils run dev\" \"npm --prefix services/user run dev\" \"npm --prefix services/job run dev\"",
+    "dev:check": "npm run check-infra && npm run dev",
+    "dev:all": "concurrently -c \"blue.bold,magenta.bold,green.bold,yellow.bold,cyan.bold\" -n \"AUTH,UTILS,USER,JOB,FRONTEND\" --kill-others \"npm --prefix services/auth run dev\" \"npm --prefix services/utils run dev\" \"npm --prefix services/user run dev\" \"npm --prefix services/job run dev\" \"npm --prefix frontend run dev\"",
+    "frontend": "npm --prefix frontend run dev",
+    "check-infra": "node scripts/check-infra.js",
+    "install:all": "npm --prefix services/auth install && npm --prefix services/utils install && npm --prefix services/user install && npm --prefix services/job install",
+    "build:all": "npm --prefix services/auth run build && npm --prefix services/utils run build && npm --prefix services/user run build && npm --prefix services/job run build"
+  },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",
     "cors": "^2.8.6",

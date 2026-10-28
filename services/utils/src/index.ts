@@ -1,5 +1,6 @@
+import "dotenv/config";
 import express from 'express';
-import dotenv from 'dotenv';
+
 import routes from './routes.js';
 import cors from 'cors';
 import { v2 as cloudinary } from "cloudinary";
@@ -7,8 +8,14 @@ import { startSendMailConsumer } from './consumer.js';
 
 
 
-dotenv.config();
-startSendMailConsumer()
+
+
+console.log("1. Environment loaded");
+console.log("2. PORT:", process.env.PORT);
+
+startSendMailConsumer();
+console.log("3. Consumer function called");
+
 
 // Configuration
     cloudinary.config({
@@ -28,7 +35,11 @@ app.use("/api/utils", routes);
 
 
 
-app.listen(process.env.PORT, () => {
-    console.log(`utils server is running on http://localhost:${process.env.PORT}`);
-})
+
+const PORT = Number(process.env.PORT) || 3001;
+
+app.listen(PORT, () => {
+  console.log(`Utils server is running on http://localhost:${PORT}`);
+});
+
 export default app;

@@ -1,2 +1,26 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+.next/
+frontend/.next/
+*.tsbuildinfo
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Frontend environment files
+frontend/.env.local
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+
+README.md/
+
+frontend/next-env.d.ts
