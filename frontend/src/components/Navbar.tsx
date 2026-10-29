@@ -41,26 +41,19 @@ export function Navbar() {
     setUserDropdownOpen(false);
   }, [pathname]);
 
-  // Recruiters hire rather than browse, so they get posting and dashboard links instead of the job list
-  const navLinks =
-    user?.role === "recruiter"
-      ? [
-          { href: "/", label: "Home" },
-          { href: "/dashboard/post-job", label: "Post a Job" },
-          { href: "/dashboard", label: "Dashboard" },
-          { href: "/about", label: "About" },
-        ]
-      : [
-          { href: "/", label: "Home" },
-          { href: "/jobs", label: "Jobs" },
-          ...(user?.role === "jobseeker"
-            ? [
-                { href: "/applications", label: "Applications" },
-                { href: "/ai", label: "AI Tools" },
-              ]
-            : []),
-          { href: "/about", label: "About" },
-        ];
+  // Signed-in users manage everything from their dashboard; guests can browse jobs
+  const dashboardHref = user?.role === "recruiter" ? "/dashboard" : "/account";
+  const navLinks = user
+    ? [
+        { href: "/", label: "Home" },
+        { href: dashboardHref, label: "Dashboard" },
+        { href: "/about", label: "About" },
+      ]
+    : [
+        { href: "/", label: "Home" },
+        { href: "/jobs", label: "Jobs" },
+        { href: "/about", label: "About" },
+      ];
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -133,12 +126,12 @@ export function Navbar() {
                   </div>
 
                   <Link
-                    href="/profile"
+                    href={dashboardHref}
                     onClick={() => setUserDropdownOpen(false)}
                     className="flex items-center space-x-2 w-full px-3 py-2 text-sm rounded-lg hover:bg-accent text-foreground hover:text-accent-foreground transition-colors"
                   >
                     <UserIcon className="h-4 w-4 text-muted-foreground" />
-                    <span>Profile</span>
+                    <span>Dashboard</span>
                   </Link>
 
                   <button
@@ -225,11 +218,11 @@ export function Navbar() {
                 </div>
 
                 <Link
-                  href="/profile"
+                  href={dashboardHref}
                   className="flex items-center space-x-2 px-3 py-2 text-sm rounded-lg hover:bg-accent text-foreground"
                 >
                   <UserIcon className="h-4 w-4 text-muted-foreground" />
-                  <span>My Profile</span>
+                  <span>Dashboard</span>
                 </Link>
 
                 <Button

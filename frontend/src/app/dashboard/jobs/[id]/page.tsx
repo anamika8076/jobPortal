@@ -9,7 +9,7 @@ import { useRecruiterData } from "@/context/RecruiterDataContext";
 import { applicantCounts } from "@/lib/recruiterStats";
 import { JobForm } from "@/components/JobForm";
 import { LoadingState, ErrorState, EmptyState } from "@/components/StatusViews";
-import { PageHeader } from "@/components/recruiter/DashboardUI";
+import { PageHeader } from "@/components/shell/DashboardUI";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Briefcase, ExternalLink, Users } from "lucide-react";

@@ -57,8 +57,8 @@ export function Footer() {
           { href: "/dashboard/settings", label: "Settings" },
         ]
       : [
-          { href: "/profile", label: "My Profile" },
-          { href: "/applications", label: "My Applications" },
+          { href: "/account", label: "My Account" },
+          { href: "/account/applications", label: "My Applications" },
         ];
 
   return (

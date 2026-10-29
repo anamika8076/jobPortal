@@ -13,7 +13,7 @@ export function formatSalary(salary?: string | number | null): string | null {
 }
 
 export function formatDate(date?: string | null): string {
-  return date ? new Date(date).toLocaleDateString() : "";
+  return date ? new Date(date).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "";
 }
 
 // Reads a File or Blob as base64 without the "data:...;base64," prefix

@@ -7,7 +7,7 @@ import { useRecruiterData } from "@/context/RecruiterDataContext";
 import { formatDate } from "@/lib/utils";
 import { LoadingState, ErrorState, EmptyState } from "@/components/StatusViews";
 import { ApplicationStatusBadge } from "@/components/ApplicationStatusBadge";
-import { SectionCard } from "@/components/recruiter/DashboardUI";
+import { SectionCard } from "@/components/shell/DashboardUI";
 import { StatusActions } from "@/components/recruiter/StatusActions";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

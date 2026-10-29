@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useRecruiterData } from "@/context/RecruiterDataContext";
 import { JobForm } from "@/components/JobForm";
 import { LoadingState, ErrorState, EmptyState } from "@/components/StatusViews";
-import { PageHeader } from "@/components/recruiter/DashboardUI";
+import { PageHeader } from "@/components/shell/DashboardUI";
 import { Button } from "@/components/ui/button";
 import { Building2 } from "lucide-react";
 

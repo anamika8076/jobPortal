@@ -10,7 +10,7 @@ import { applicantCounts } from "@/lib/recruiterStats";
 import { JOB_TYPES } from "@/types";
 import { workLocationLabel } from "@/components/JobForm";
 import { LoadingState, ErrorState, EmptyState } from "@/components/StatusViews";
-import { PageHeader } from "@/components/recruiter/DashboardUI";
+import { PageHeader } from "@/components/shell/DashboardUI";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

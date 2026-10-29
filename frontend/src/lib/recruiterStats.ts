@@ -1,5 +1,5 @@
 import { APPLICATION_STATUSES, ApplicationStatus, RecruiterApplication, RecruiterJob } from "@/types";
-import type { ChartDatum } from "@/components/recruiter/DashboardUI";
+import type { ChartDatum } from "@/components/shell/DashboardUI";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 

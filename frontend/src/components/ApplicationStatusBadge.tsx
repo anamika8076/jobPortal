@@ -8,10 +8,25 @@ const statusVariant: Record<ApplicationStatus, BadgeProps["variant"]> = {
   Hired: "success",
 };
 
-export function ApplicationStatusBadge({ status, className }: { status: ApplicationStatus; className?: string }) {
+// How each backend status reads to the candidate
+export const SEEKER_STATUS_LABEL: Record<ApplicationStatus, string> = {
+  Submitted: "Under review",
+  Hired: "Hired",
+  Rejected: "Not selected",
+};
+
+export function ApplicationStatusBadge({
+  status,
+  className,
+  label,
+}: {
+  status: ApplicationStatus;
+  className?: string;
+  label?: string;
+}) {
   return (
     <Badge variant={statusVariant[status] ?? "secondary"} className={className}>
-      {status}
+      {label ?? status}
     </Badge>
   );
 }

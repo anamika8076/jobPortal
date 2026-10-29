@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRecruiterData } from "@/context/RecruiterDataContext";
 import { formatDate } from "@/lib/utils";
 import { LoadingState, ErrorState } from "@/components/StatusViews";
-import { PageHeader } from "@/components/recruiter/DashboardUI";
+import { PageHeader } from "@/components/shell/DashboardUI";
 import { CreateCompanyForm } from "@/components/recruiter/CreateCompanyForm";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

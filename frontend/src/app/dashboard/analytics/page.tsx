@@ -7,7 +7,7 @@ import { applicantsByJob, applicationsByWeek, statusCounts } from "@/lib/recruit
 import { cn, formatDate } from "@/lib/utils";
 import { APPLICATION_STATUSES, ApplicationStatus } from "@/types";
 import { LoadingState, ErrorState, EmptyState } from "@/components/StatusViews";
-import { ColumnChart, HorizontalBarChart, PageHeader, SectionCard, StatCard } from "@/components/recruiter/DashboardUI";
+import { ColumnChart, HorizontalBarChart, PageHeader, SectionCard, StatCard } from "@/components/shell/DashboardUI";
 import { Button } from "@/components/ui/button";
 import { BarChart3, CheckCircle2, Clock, Percent, Users, XCircle, LucideIcon } from "lucide-react";
 

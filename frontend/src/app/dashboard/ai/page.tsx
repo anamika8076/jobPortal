@@ -9,7 +9,7 @@ import { useRecruiterData } from "@/context/RecruiterDataContext";
 import { ResumeAnalysis } from "@/types";
 import { LoadingState, ErrorState } from "@/components/StatusViews";
 import { ResumeAnalysisView } from "@/components/ResumeAnalysisView";
-import { PageHeader, SectionCard } from "@/components/recruiter/DashboardUI";
+import { PageHeader, SectionCard } from "@/components/shell/DashboardUI";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";

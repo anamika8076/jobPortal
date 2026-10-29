@@ -6,16 +6,17 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ChevronRight, Home, Menu, Plus, Search } from "lucide-react";
-import { getBreadcrumbs } from "./navigation";
+import { ShellConfig, getBreadcrumbs } from "./config";
 
 // Account, settings and logout live in the sidebar footer, so the top bar stays task-focused
-export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
+export function Topbar({ config, onMenuClick }: { config: ShellConfig; onMenuClick: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [isMac, setIsMac] = useState(true);
   const searchRef = useRef<HTMLInputElement>(null);
-  const crumbs = getBreadcrumbs(pathname);
+  const crumbs = getBreadcrumbs(pathname, config);
+  const { search, primaryAction } = config;
 
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad/.test(navigator.platform));
@@ -37,7 +38,7 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
     e.preventDefault();
     const q = query.trim();
     searchRef.current?.blur();
-    router.push(q ? `/dashboard/applicants?q=${encodeURIComponent(q)}` : "/dashboard/applicants");
+    router.push(q ? `${search.path}?${search.param}=${encodeURIComponent(q)}` : search.path);
   };
 
   return (
@@ -52,7 +53,6 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
           <Menu className="h-5 w-5" />
         </button>
 
-        {/* Breadcrumbs */}
         <nav aria-label="Breadcrumb" className="min-w-0 flex-1 lg:flex-none lg:w-64">
           <ol className="flex items-center gap-1.5 text-sm">
             {crumbs.map((crumb, i) => {
@@ -75,16 +75,15 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
           </ol>
         </nav>
 
-        {/* Search */}
         <form onSubmit={handleSearch} role="search" className="hidden md:block flex-1 max-w-md mx-auto">
           <label className="group relative block">
-            <span className="sr-only">Search applicants by name or skill</span>
+            <span className="sr-only">{search.placeholder}</span>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               ref={searchRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search applicants, skills..."
+              placeholder={search.placeholder}
               className="h-9 w-full rounded-lg border border-input bg-muted/40 pl-9 pr-14 text-sm placeholder:text-muted-foreground transition-colors focus:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
             <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 hidden lg:inline-flex items-center gap-0.5 rounded border border-border bg-background px-1.5 py-0.5 font-sans text-[10px] font-medium text-muted-foreground group-focus-within:hidden">
@@ -94,7 +93,7 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
         </form>
 
         <div className="flex items-center gap-2 ml-auto md:ml-0">
-          <Link href="/dashboard/applicants" className="md:hidden" aria-label="Search applicants">
+          <Link href={search.path} className="md:hidden" aria-label={search.placeholder}>
             <Button variant="ghost" size="icon">
               <Search className="h-5 w-5" />
             </Button>
@@ -108,11 +107,11 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
             </Button>
           </Link>
 
-          {pathname !== "/dashboard/post-job" && (
-            <Link href="/dashboard/post-job" className="hidden sm:block">
-              <Button variant="brand" size="sm" className="gap-1.5 h-9">
+          {primaryAction && pathname !== primaryAction.href && (
+            <Link href={primaryAction.href} className="hidden sm:block">
+              <Button size="sm" className="gap-1.5 h-9">
                 <Plus className="h-4 w-4" />
-                New job
+                {primaryAction.label}
               </Button>
             </Link>
           )}

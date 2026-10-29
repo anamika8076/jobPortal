@@ -2,57 +2,50 @@
 
 import React, { useEffect } from "react";
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/Logo";
 import { Avatar } from "@/components/ui/avatar";
 import { LogOut, Settings, X } from "lucide-react";
-import { RECRUITER_NAV, isNavActive } from "./navigation";
+import { ShellConfig, isNavActive } from "./config";
 
 interface SidebarProps {
+  config: ShellConfig;
   mobileOpen: boolean;
   onClose: () => void;
 }
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+const itemClass = (active: boolean) =>
+  cn(
+    "flex items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+    active ? "bg-accent text-accent-foreground font-semibold" : "text-muted-foreground hover:bg-accent hover:text-foreground"
+  );
+
+function SidebarContent({ config, onNavigate }: { config: ShellConfig; onNavigate?: () => void }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const settingsActive = pathname === config.settingsHref;
 
   return (
     <div className="flex h-full flex-col">
       <Link
-        href="/dashboard"
+        href={config.homeHref}
         onClick={onNavigate}
         className="flex items-center px-5 h-16 shrink-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        aria-label="Hirely recruiter dashboard"
+        aria-label={`Hirely ${config.roleLabel.toLowerCase()} home`}
       >
         <Logo />
       </Link>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Recruiter navigation">
+      <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label={config.navLabel}>
         <ul className="space-y-1">
-          {RECRUITER_NAV.map(({ href, label, icon: Icon }) => {
-            const active = isNavActive(pathname, href);
+          {config.nav.map(({ href, label, icon: Icon }) => {
+            const active = isNavActive(pathname, href, config.homeHref);
             return (
               <li key={href}>
-                <Link
-                  href={href}
-                  onClick={onNavigate}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    active
-                      ? "bg-accent text-accent-foreground font-semibold"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                  )}
-                >
-                  <Icon
-                    className={cn(
-                      "h-[18px] w-[18px] shrink-0",
-                      active ? "text-primary" : "text-muted-foreground"
-                    )}
-                  />
+                <Link href={href} onClick={onNavigate} aria-current={active ? "page" : undefined} className={cn(itemClass(active), "py-2.5")}>
+                  <Icon className={cn("h-[18px] w-[18px] shrink-0", active ? "text-primary" : "text-muted-foreground")} />
                   {label}
                 </Link>
               </li>
@@ -69,22 +62,17 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               <div className="flex items-center gap-1.5">
                 <p className="text-sm font-semibold text-foreground truncate capitalize">{user.name}</p>
                 <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-primary/10 text-primary">
-                  Recruiter
+                  {config.roleLabel}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground truncate">{user.email}</p>
             </div>
           </div>
           <Link
-            href="/dashboard/settings"
+            href={config.settingsHref}
             onClick={onNavigate}
-            aria-current={pathname === "/dashboard/settings" ? "page" : undefined}
-            className={cn(
-              "mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              pathname === "/dashboard/settings"
-                ? "bg-accent text-accent-foreground font-semibold"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
-            )}
+            aria-current={settingsActive ? "page" : undefined}
+            className={cn(itemClass(settingsActive), "mt-1 w-full py-2")}
           >
             <Settings className="h-4 w-4" />
             Settings
@@ -103,7 +91,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
+export function Sidebar({ config, mobileOpen, onClose }: SidebarProps) {
   useEffect(() => {
     if (!mobileOpen) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -115,7 +103,7 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
     <>
       {/* Desktop */}
       <aside className="hidden lg:block fixed inset-y-0 left-0 z-30 w-64 border-r border-border bg-card">
-        <SidebarContent />
+        <SidebarContent config={config} />
       </aside>
 
       {/* Mobile and tablet drawer */}
@@ -131,7 +119,7 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
             >
               <X className="h-5 w-5" />
             </button>
-            <SidebarContent onNavigate={onClose} />
+            <SidebarContent config={config} onNavigate={onClose} />
           </aside>
         </div>
       )}

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const AUTH_PAGES = ["/login", "/register", "/forgot-password"];
-const PROTECTED_PAGES = ["/profile", "/dashboard", "/applications", "/ai"];
+const PROTECTED_PAGES = ["/profile", "/dashboard", "/applications", "/ai", "/account"];
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
@@ -35,5 +35,6 @@ export const config = {
     "/dashboard/:path*",
     "/applications/:path*",
     "/ai/:path*",
+    "/account/:path*",
   ],
 };

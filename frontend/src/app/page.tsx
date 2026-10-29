@@ -250,7 +250,7 @@ function JobSeekerHome() {
                 </p>
               </div>
             </div>
-            <Link href={user?.role === "jobseeker" ? "/ai" : "/register"} className="shrink-0">
+            <Link href={user?.role === "jobseeker" ? "/account/resume-check" : "/register"} className="shrink-0">
               <Button variant="outline" className="gap-2">
                 <FileText className="h-4 w-4" />
                 Check my resume

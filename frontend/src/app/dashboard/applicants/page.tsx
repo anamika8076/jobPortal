@@ -8,7 +8,7 @@ import { formatDate } from "@/lib/utils";
 import { APPLICATION_STATUSES } from "@/types";
 import { LoadingState, ErrorState, EmptyState } from "@/components/StatusViews";
 import { ApplicationStatusBadge } from "@/components/ApplicationStatusBadge";
-import { PageHeader } from "@/components/recruiter/DashboardUI";
+import { PageHeader } from "@/components/shell/DashboardUI";
 import { StatusActions } from "@/components/recruiter/StatusActions";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 
-// The recruiter dashboard renders its own sidebar and top bar
+// Signed-in areas (recruiter dashboard, job seeker account) render their own sidebar and top bar
 export function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isDashboard = pathname.startsWith("/dashboard");
+  const isDashboard = pathname.startsWith("/dashboard") || pathname === "/account" || pathname.startsWith("/account/");
 
   if (isDashboard) {
     return <>{children}</>;

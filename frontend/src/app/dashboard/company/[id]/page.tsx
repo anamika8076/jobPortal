@@ -9,7 +9,7 @@ import { useRecruiterData } from "@/context/RecruiterDataContext";
 import { applicantCounts } from "@/lib/recruiterStats";
 import { formatDate } from "@/lib/utils";
 import { LoadingState, ErrorState, EmptyState } from "@/components/StatusViews";
-import { PageHeader, SectionCard } from "@/components/recruiter/DashboardUI";
+import { PageHeader, SectionCard } from "@/components/shell/DashboardUI";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

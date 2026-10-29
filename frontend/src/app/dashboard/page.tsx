@@ -8,7 +8,7 @@ import { formatDate } from "@/lib/utils";
 import { applicantCounts, applicationsByWeek, statusCounts } from "@/lib/recruiterStats";
 import { LoadingState, ErrorState, EmptyState } from "@/components/StatusViews";
 import { ApplicationStatusBadge } from "@/components/ApplicationStatusBadge";
-import { ColumnChart, PageHeader, SectionCard, StatCard } from "@/components/recruiter/DashboardUI";
+import { ColumnChart, PageHeader, SectionCard, StatCard } from "@/components/shell/DashboardUI";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Briefcase, Building2, CheckCircle2, Clock, PlusCircle, Users, ArrowRight, MapPin } from "lucide-react";
