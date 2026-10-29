@@ -1,84 +1,86 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
-import { Briefcase, Heart } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { Logo } from "./Logo";
+
+interface FooterLink {
+  href: string;
+  label: string;
+}
+
+function FooterColumn({ title, links }: { title: string; links: FooterLink[] }) {
+  return (
+    <div className="space-y-3">
+      <h4 className="text-sm font-semibold tracking-wide uppercase text-foreground">{title}</h4>
+      <ul className="space-y-2 text-sm text-muted-foreground">
+        {links.map((link) => (
+          <li key={link.href}>
+            <Link href={link.href} className="hover:text-primary transition-colors">
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export function Footer() {
+  const { user } = useAuth();
   const currentYear = new Date().getFullYear();
+
+  const explore: FooterLink[] =
+    user?.role === "recruiter"
+      ? [
+          { href: "/", label: "Home" },
+          { href: "/dashboard/post-job", label: "Post a Job" },
+          { href: "/dashboard/applicants", label: "Applicants" },
+          { href: "/about", label: "About Us" },
+        ]
+      : [
+          { href: "/", label: "Home" },
+          { href: "/jobs", label: "Browse Jobs" },
+          { href: "/about", label: "About Us" },
+        ];
+
+  const account: FooterLink[] = !user
+    ? [
+        { href: "/login", label: "Sign In" },
+        { href: "/register", label: "Create Account" },
+        { href: "/forgot-password", label: "Forgot Password" },
+      ]
+    : user.role === "recruiter"
+      ? [
+          { href: "/dashboard", label: "Dashboard" },
+          { href: "/dashboard/settings", label: "Settings" },
+        ]
+      : [
+          { href: "/profile", label: "My Profile" },
+          { href: "/applications", label: "My Applications" },
+        ];
 
   return (
     <footer className="border-t border-border/60 bg-muted/30">
       <div className="container py-10 md:py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand */}
           <div className="md:col-span-2 space-y-3">
-            <Link href="/" className="flex items-center space-x-2 font-bold text-xl">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-indigo-600 via-blue-600 to-cyan-500 flex items-center justify-center text-white shadow-sm">
-                <Briefcase className="h-4 w-4" />
-              </div>
-              <span className="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                HireHeaven
-              </span>
+            <Link href="/" className="inline-flex rounded-md" aria-label="Hirely home">
+              <Logo markClassName="h-8 w-8" />
             </Link>
             <p className="text-sm text-muted-foreground max-w-sm">
-              Connecting ambitious talent with world-class opportunities. Discover high-growth jobs or find top candidates with an intelligent, microservice-powered platform.
+              {user?.role === "recruiter"
+                ? "Post roles, review applicants and keep candidates updated, all from one dashboard."
+                : "Hirely is a job board for people looking for work and the companies hiring them. Search roles, apply with your resume, and track every application."}
             </p>
           </div>
-
-          {/* Quick Links */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold tracking-wide uppercase text-foreground">
-              Explore
-            </h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <Link href="/" className="hover:text-primary transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link href="/jobs" className="hover:text-primary transition-colors">
-                  Browse Jobs
-                </Link>
-              </li>
-              <li>
-                <Link href="/about" className="hover:text-primary transition-colors">
-                  About Us
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Auth & Support */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold tracking-wide uppercase text-foreground">
-              Account
-            </h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <Link href="/login" className="hover:text-primary transition-colors">
-                  Sign In
-                </Link>
-              </li>
-              <li>
-                <Link href="/register" className="hover:text-primary transition-colors">
-                  Create Account
-                </Link>
-              </li>
-              <li>
-                <Link href="/forgot-password" className="hover:text-primary transition-colors">
-                  Forgot Password
-                </Link>
-              </li>
-            </ul>
-          </div>
+          <FooterColumn title="Explore" links={explore} />
+          <FooterColumn title="Account" links={account} />
         </div>
 
-        <div className="mt-8 pt-6 border-t border-border/50 flex flex-col md:flex-row items-center justify-between text-xs text-muted-foreground gap-4">
-          <p>© {currentYear} HireHeaven. All rights reserved.</p>
-          <div className="flex items-center space-x-1">
-            <span>Built with modern microservices & Next.js</span>
-            <Heart className="h-3.5 w-3.5 text-rose-500 fill-rose-500 inline mx-0.5" />
-          </div>
+        <div className="mt-8 pt-6 border-t border-border/50 text-xs text-muted-foreground">
+          <p>© {currentYear} Hirely. All rights reserved.</p>
         </div>
       </div>
     </footer>

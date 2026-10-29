@@ -2,6 +2,7 @@
 
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
+import { LogoMark } from "@/components/Logo";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { getErrorMessage } from "@/lib/api";
@@ -11,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import toast from "react-hot-toast";
-import { Briefcase, Mail, Lock, Eye, EyeOff, LogIn } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, LogIn } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
@@ -65,11 +66,9 @@ function LoginForm() {
   return (
     <Card className="border-border/80 shadow-xl">
       <CardHeader className="space-y-2 text-center pb-6 border-b border-border/50">
-        <div className="mx-auto h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-1">
-          <Briefcase className="h-6 w-6" />
-        </div>
+        <LogoMark className="mx-auto h-12 w-12 mb-1" />
         <CardTitle className="text-2xl md:text-3xl font-extrabold tracking-tight">
-          Sign in to HireHeaven
+          Sign in to Hirely
         </CardTitle>
         <CardDescription className="text-muted-foreground text-sm">
           Enter your credentials to access your account.

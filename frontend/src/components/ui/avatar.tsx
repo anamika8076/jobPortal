@@ -51,7 +51,7 @@ export function Avatar({
           className="aspect-square h-full w-full object-cover"
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center font-semibold bg-gradient-to-tr from-indigo-500 to-blue-500 text-white">
+        <div className="flex h-full w-full items-center justify-center font-semibold bg-primary/10 text-primary">
           {initials}
         </div>
       )}

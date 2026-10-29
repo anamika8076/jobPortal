@@ -1,7 +1,7 @@
 {
   "name": "hirely-backend",
   "version": "1.0.0",
-  "description": "HireHeaven Microservices Backend Root",
+  "description": "Hirely Microservices Backend Root",
   "private": true,
   "scripts": {
     "dev": "concurrently -c \"blue.bold,magenta.bold,green.bold,yellow.bold\" -n \"AUTH,UTILS,USER,JOB\" --kill-others \"npm --prefix services/auth run dev\" \"npm --prefix services/utils run dev\" \"npm --prefix services/user run dev\" \"npm --prefix services/job run dev\"",

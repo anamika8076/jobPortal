@@ -69,7 +69,7 @@ function checkTcp(host, port, useTls = false) {
 
 async function runCheck() {
   console.log("\n========================================================");
-  console.log("       🔍 HireHeaven Infrastructure Health Check        ");
+  console.log("       🔍 Hirely Infrastructure Health Check        ");
   console.log("========================================================\n");
 
   const services = [

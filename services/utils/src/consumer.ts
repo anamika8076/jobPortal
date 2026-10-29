@@ -50,7 +50,7 @@ export const startSendMailConsumer = async () => {
           }
 
           await transporter.sendMail({
-            from: `HireHeaven <${process.env.SMTP_USER}>`,
+            from: `Hirely <${process.env.SMTP_USER}>`,
             to,
             subject,
             html,

@@ -34,6 +34,19 @@ function attachAuthInterceptor(instance: AxiosInstance): AxiosInstance {
     (error) => Promise.reject(error)
   );
 
+  // Expired or invalid token: clear the session and send the user to login
+  instance.interceptors.response.use(
+    (response) => response,
+    (error: AxiosError) => {
+      if (isBrowser && error.response?.status === 401 && Cookies.get("token")) {
+        Cookies.remove("token");
+        const redirect = encodeURIComponent(window.location.pathname);
+        window.location.href = `/login?redirect=${redirect}`;
+      }
+      return Promise.reject(error);
+    }
+  );
+
   return instance;
 }
 
@@ -72,6 +85,12 @@ export const utilsApi = attachAuthInterceptor(
     },
   })
 );
+
+// Instances default to JSON, which makes axios serialize FormData as JSON.
+// Pass this config for file uploads so the browser sends multipart with a boundary.
+export const multipartConfig = {
+  headers: { "Content-Type": "multipart/form-data" },
+};
 
 interface ErrorResponseData {
   message?: string;

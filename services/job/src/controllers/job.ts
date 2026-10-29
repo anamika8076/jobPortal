@@ -136,11 +136,6 @@ export const updateJob = TryCatch(async (req: AuthenticatedRequest, res) => {
     is_active,
   } = req.body;
 
-  // ADD THESE LOGS HERE
-  console.log("JOB ID:", req.params.jobId);
-  console.log("IS ACTIVE:", req.body.is_active);
-  console.log("BODY:", req.body);
-
   const [existingJob] =
     await sql`SELECT posted_by_recruiter_id FROM jobs WHERE job_id=${req.params.jobId} `;
   if (!existingJob) {
@@ -152,16 +147,25 @@ export const updateJob = TryCatch(async (req: AuthenticatedRequest, res) => {
       "Forbidden: You are not authorized to update this job",
     );
   }
-  const [updatedJob] = await sql`UPDATE jobs SET title=${title},
-    description=${description},
-    salary=${salary}, 
-    location=${location}, 
-    job_type=${job_type}, 
-    openings=${openings}, 
-    role=${role}, 
-    company_id=${company_id},
-    work_location=${work_location}, 
-    is_active=${is_active} 
+  // Moving a job to another company is only allowed into a company the recruiter owns
+  if (company_id !== undefined && company_id !== null) {
+    const [company] =
+      await sql`SELECT company_id FROM companies WHERE company_id=${company_id} AND recruiter_id=${user.user_id}`;
+    if (!company) {
+      throw new ErrorHandler(403, "Forbidden: You do not own this company");
+    }
+  }
+  // Fields left out of the request keep their current value instead of being nulled
+  const [updatedJob] = await sql`UPDATE jobs SET title=COALESCE(${title ?? null}, title),
+    description=COALESCE(${description ?? null}, description),
+    salary=COALESCE(${salary ?? null}, salary),
+    location=COALESCE(${location ?? null}, location),
+    job_type=COALESCE(${job_type ?? null}, job_type),
+    openings=COALESCE(${openings ?? null}, openings),
+    role=COALESCE(${role ?? null}, role),
+    company_id=COALESCE(${company_id ?? null}, company_id),
+    work_location=COALESCE(${work_location ?? null}, work_location),
+    is_active=COALESCE(${is_active ?? null}, is_active)
     WHERE job_id=${req.params.jobId} RETURNING *;`;
 
   res.json({
@@ -276,6 +280,10 @@ export const updateApplication=TryCatch(async(req:AuthenticatedRequest,res)=>{
   }
 
   const {id}=req.params
+const { status } = req.body
+if (!["Submitted", "Rejected", "Hired"].includes(status)) {
+  throw new ErrorHandler(400, "status must be one of Submitted, Rejected, Hired")
+}
 const [application]=await sql `SELECT * FROM applications WHERE application_id=${id}`;
 if(!application){
   throw new ErrorHandler(404, "Application not found")
@@ -287,7 +295,7 @@ if (!job){
 if(job.posted_by_recruiter_id !== user.user_id){
   throw new ErrorHandler(403,"forbidden you are not allowed  ")
 }
-const [updatedApplication]=await sql `UPDATE applications SET status = ${req.body.status} WHERE application_id=${id} RETURNING *`;
+const [updatedApplication]=await sql `UPDATE applications SET status = ${status} WHERE application_id=${id} RETURNING *`;
 const message ={
   to:application.applicant_email,
   subject:"Application update-Hirely",

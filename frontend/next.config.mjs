@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    // AI routes retry and fall back between Gemini models, which can exceed the 30s default
+    proxyTimeout: 120_000,
+  },
   images: {
     remotePatterns: [
       {

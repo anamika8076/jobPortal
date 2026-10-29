@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { LogoMark } from "@/components/Logo";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { getErrorMessage } from "@/lib/api";
@@ -23,7 +24,6 @@ import {
   EyeOff,
   UploadCloud,
   Check,
-  Sparkles,
   Camera,
 } from "lucide-react";
 
@@ -164,11 +164,9 @@ export default function RegisterPage() {
       <div className="container max-w-2xl py-12 px-4 md:px-6">
         <Card className="border-border/80 shadow-xl">
           <CardHeader className="space-y-2 text-center pb-6 border-b border-border/50">
-            <div className="mx-auto h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-1">
-              <Briefcase className="h-6 w-6" />
-            </div>
+            <LogoMark className="mx-auto h-12 w-12 mb-1" />
             <CardTitle className="text-2xl md:text-3xl font-extrabold tracking-tight">
-              Create your HireHeaven account
+              Create your Hirely account
             </CardTitle>
             <CardDescription className="text-muted-foreground text-sm">
               Join thousands of job seekers and verified recruiters today.
@@ -422,7 +420,6 @@ export default function RegisterPage() {
                 className="w-full gap-2 text-base font-semibold"
                 isLoading={isSubmitting}
               >
-                <Sparkles className="h-4 w-4" />
                 <span>Create {role === "recruiter" ? "Recruiter" : "Job Seeker"} Account</span>
               </Button>
 

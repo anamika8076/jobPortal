@@ -8,37 +8,87 @@ const router = express.Router();
 // Gemini API configuration
 const apiKey = process.env.API_KEY_GEMINI;
 
+// Without a key only the AI routes are disabled; uploads must keep working
 if (!apiKey) {
-  throw new Error(
-    "API_KEY_GEMINI is missing. Please check your .env file."
-  );
+  console.warn("API_KEY_GEMINI is missing. AI routes will return 503 until it is set in .env.");
 }
 
-const ai = new GoogleGenAI({ apiKey });
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+
+const requireAi = (res: express.Response) => {
+  if (!ai) {
+    res.status(503).json({
+      message: "AI features are not configured on the server (API_KEY_GEMINI is missing).",
+    });
+    return null;
+  }
+  return ai;
+};
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function generateCareerContent(prompt: string) {
-  const maxAttempts = 3;
+type GeminiContents = Parameters<GoogleGenAI["models"]["generateContent"]>[0]["contents"];
 
-  for (let attempt = 1; ; attempt += 1) {
-    try {
-      return await ai.models.generateContent({
-        model: "gemini-3.8-flash",
-        contents: prompt,
-      });
-    } catch (error: any) {
-      const status = Number(error?.status ?? error?.code);
-      const shouldRetry = (status === 503 || status === 429) && attempt < maxAttempts;
+// Tried in order; a model that stays overloaded falls through to the next one.
+// Override with GEMINI_MODELS=model-a,model-b in .env
+const GEMINI_MODELS = (process.env.GEMINI_MODELS || "gemini-3.8-flash,gemini-3.5-flash,gemini-3.7-flash")
+  .split(",")
+  .map((m) => m.trim())
+  .filter(Boolean);
 
-      if (!shouldRetry) throw error;
+const ATTEMPTS_PER_MODEL = 2;
+const REQUEST_TIMEOUT_MS = 30_000;
+// Stay under the frontend proxy timeout (next.config.mjs proxyTimeout)
+const TOTAL_BUDGET_MS = 90_000;
 
-      // Back off on temporary overload/rate-limit responses before retrying.
-      const delayMs = 1000 * 2 ** (attempt - 1) + Math.random() * 250;
-      console.warn(`Gemini returned ${status}; retrying in ${Math.round(delayMs)}ms (attempt ${attempt + 1}/${maxAttempts})`);
-      await sleep(delayMs);
+const errorStatus = (error: any) => Number(error?.status ?? error?.code);
+
+// Overload, rate limit, Google-side errors and network failures are worth retrying
+const isTransient = (error: any) => {
+  const status = errorStatus(error);
+  return Number.isNaN(status) || status === 429 || status >= 500;
+};
+
+async function generateWithFallback(client: GoogleGenAI, contents: GeminiContents) {
+  let lastError: unknown;
+  const deadline = Date.now() + TOTAL_BUDGET_MS;
+
+  for (const model of GEMINI_MODELS) {
+    for (let attempt = 1; attempt <= ATTEMPTS_PER_MODEL; attempt += 1) {
+      if (Date.now() >= deadline) throw lastError ?? new Error("Gemini request budget exhausted");
+      try {
+        return await client.models.generateContent({
+          model,
+          contents,
+          config: { httpOptions: { timeout: Math.min(REQUEST_TIMEOUT_MS, deadline - Date.now()) } },
+        });
+      } catch (error: any) {
+        lastError = error;
+        // Model not available for this key: skip straight to the next one
+        if (errorStatus(error) === 404) break;
+        if (!isTransient(error)) throw error;
+        if (attempt < ATTEMPTS_PER_MODEL) {
+          // Back off on temporary overload/rate-limit responses before retrying.
+          const delayMs = 1000 * 2 ** (attempt - 1) + Math.random() * 250;
+          console.warn(`Gemini ${model} failed (${errorStatus(error) || "network"}); retrying in ${Math.round(delayMs)}ms`);
+          await sleep(delayMs);
+        }
+      }
     }
+    console.warn(`Gemini ${model} unavailable; trying next model`);
   }
+  throw lastError;
+}
+
+// Never forward Google's raw error body to the browser
+function sendAiError(res: express.Response, error: any, label: string) {
+  console.error(`${label} error:`, error);
+  if (isTransient(error)) {
+    return res.status(503).json({
+      message: "The AI service is busy right now. Please try again in a minute.",
+    });
+  }
+  return res.status(500).json({ message: `${label} failed. Please try again.` });
 }
 
 // Cloudinary upload route
@@ -74,6 +124,8 @@ router.post("/upload", async (req, res) => {
 // Career recommendation route
 router.post("/career", async (req, res) => {
   try {
+    const client = requireAi(res);
+    if (!client) return;
     const { skills } = req.body;
 
     if (!skills) {
@@ -121,7 +173,7 @@ Use this structure:
 Ensure all required fields are included and the JSON is valid.
 `;
 
-    const response = await generateCareerContent(prompt);
+    const response = await generateWithFallback(client, prompt);
 
     const rawText = response.text
       ?.replace(/```json/gi, "")
@@ -148,18 +200,7 @@ Ensure all required fields are included and the JSON is valid.
 
     return res.json(jsonResponse);
   } catch (error: any) {
-    console.error("Career recommendation error:", error);
-
-    const status = Number(error?.status ?? error?.code);
-    if (status === 503 || status === 429) {
-      return res.status(status).json({
-        message: "Career recommendations are temporarily unavailable. Please try again shortly.",
-      });
-    }
-
-    return res.status(500).json({
-      message: error.message || "Failed to generate career recommendations",
-    });
+    return sendAiError(res, error, "Career recommendation");
   }
 });
 
@@ -168,6 +209,8 @@ Ensure all required fields are included and the JSON is valid.
 
 router.post("/resume-analyser",async(req,res)=>{
   try {
+    const client = requireAi(res)
+    if (!client) return
     const {pdfBase64}=req.body
 
     if(!pdfBase64){
@@ -261,9 +304,7 @@ Scoring rules:
 - Include multiple suggestions only when genuine improvement opportunities are identified.
 - Ensure all JSON strings are properly escaped and the response is valid JSON.
 `;
-  const response =await ai.models.generateContent({
-    model:"gemini-3.8-flash",
-    contents: [{
+  const response = await generateWithFallback(client, [{
       role:"user",
       parts:[
 
@@ -273,14 +314,12 @@ Scoring rules:
         {
           inlineData:{
             mimeType:"application/pdf",
-            data:pdfBase64.replace(/^data:application\/pdf; base64,/, ""),
+            data:pdfBase64.replace(/^data:application\/pdf;\s?base64,/, ""),
           }
         }
       ]
 
-    }],
-
-  })
+    }])
   const rawText = response.text
       ?.replace(/```json/gi, "")
       .replace(/```/g, "")
@@ -309,10 +348,7 @@ Scoring rules:
 
 
   catch (error:any) {
-    res.status(500).json({
-      message:error.message,
-    })
-
+    return sendAiError(res, error, "Resume analysis")
   }
 
 

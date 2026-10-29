@@ -163,7 +163,7 @@ export const forgotPasswordTemplate = (resetLink: string) => {
           <tr>
             <td class="footer">
               <p class="footer-text">
-                © 2025 Job Portal. All rights reserved.
+                © 2026 Hirely. All rights reserved.
               </p>
 
               <p class="footer-text">

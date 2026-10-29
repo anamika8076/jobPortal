@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { Logo } from "./Logo";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { ThemeToggle } from "./ThemeToggle";
@@ -9,13 +10,11 @@ import { Avatar } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import {
-  Briefcase,
   Menu,
   X,
   LogOut,
   User as UserIcon,
   ChevronDown,
-  Sparkles,
 } from "lucide-react";
 
 export function Navbar() {
@@ -42,11 +41,26 @@ export function Navbar() {
     setUserDropdownOpen(false);
   }, [pathname]);
 
-  const navLinks = [
-    { href: "/", label: "Home" },
-    { href: "/jobs", label: "Jobs" },
-    { href: "/about", label: "About" },
-  ];
+  // Recruiters hire rather than browse, so they get posting and dashboard links instead of the job list
+  const navLinks =
+    user?.role === "recruiter"
+      ? [
+          { href: "/", label: "Home" },
+          { href: "/dashboard/post-job", label: "Post a Job" },
+          { href: "/dashboard", label: "Dashboard" },
+          { href: "/about", label: "About" },
+        ]
+      : [
+          { href: "/", label: "Home" },
+          { href: "/jobs", label: "Jobs" },
+          ...(user?.role === "jobseeker"
+            ? [
+                { href: "/applications", label: "Applications" },
+                { href: "/ai", label: "AI Tools" },
+              ]
+            : []),
+          { href: "/about", label: "About" },
+        ];
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -57,13 +71,8 @@ export function Navbar() {
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center space-x-2 font-bold text-xl group">
-          <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-blue-600 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-            <Briefcase className="h-5 w-5" />
-          </div>
-          <span className="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent tracking-tight">
-            HireHeaven
-          </span>
+        <Link href="/" className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Hirely home">
+          <Logo />
         </Link>
 
         {/* Desktop Nav Links */}
@@ -156,7 +165,6 @@ export function Navbar() {
               </Link>
               <Link href="/register">
                 <Button variant="gradient" size="sm" className="gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5" />
                   Register
                 </Button>
               </Link>
@@ -243,7 +251,6 @@ export function Navbar() {
                 </Link>
                 <Link href="/register">
                   <Button variant="gradient" className="w-full gap-1.5">
-                    <Sparkles className="h-4 w-4" />
                     Register
                   </Button>
                 </Link>

@@ -2,13 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/context/AuthContext";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
+import { SiteChrome } from "@/components/SiteChrome";
 import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
-  title: "HireHeaven - The Intelligent Job Portal",
-  description: "Find your dream job or hire top talent with microservice-powered precision.",
+  title: "Hirely - Jobs and Hiring",
+  description: "Search open jobs, apply with your resume and track your applications. Companies can post roles and review candidates.",
 };
 
 export default function RootLayout({
@@ -26,11 +25,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <div className="flex flex-col min-h-screen">
-              <Navbar />
-              <main className="flex-1">{children}</main>
-              <Footer />
-            </div>
+            <SiteChrome>{children}</SiteChrome>
             <Toaster
               position="top-right"
               toastOptions={{
