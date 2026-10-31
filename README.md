@@ -152,7 +152,7 @@ Never commit `.env` files; they are gitignored. Only the `.env.example` template
 | `Frontend_Url` | auth | Base URL for reset-password links, e.g. `http://localhost:3004` |
 | `CLOUD_NAME`, `API_KEY`, `API_SECRET` | utils | Cloudinary credentials |
 | `API_KEY_GEMINI` | utils | Gemini API key. Without it, uploads still work and AI routes return 503 |
-| `GEMINI_MODELS` | utils | Optional. Comma-separated fallback order, default `gemini-3.6-flash,gemini-3.8-flash` |
+| `GEMINI_MODELS` | utils | Optional. Comma-separated fallback order, default `gemini-3.5-flash-lite,gemini-flash-lite-latest,gemini-3.6-flash,gemini-3.5-flash,gemini-3.8-flash` |
 | `SMTP_USER`, `SMTP_PASS` | utils | Gmail address and Gmail App Password for outgoing email |
 | `NEXT_PUBLIC_AUTH_URL`, `..._USER_URL`, `..._JOB_URL`, `..._UTILS_URL` | frontend | Optional; defaults match the ports above |
 
@@ -244,7 +244,7 @@ All routes go through the frontend at `/api/<service>/...`. "Auth" means the req
 | POST | `/career` | `{ skills }`. AI career suggestions as JSON |
 | POST | `/resume-analyser` | `{ pdfBase64 }`. AI ATS score, breakdown, strengths and suggestions |
 
-AI routes retry, fall back through `GEMINI_MODELS`, and return `503` with a friendly message when Gemini is busy.
+AI routes try each model in `GEMINI_MODELS`, then make a second pass (100 s budget). Empty or malformed AI output counts as a failed attempt. If every model fails they return `503` with a friendly message.
 
 ## Data model
 

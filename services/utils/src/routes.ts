@@ -25,18 +25,26 @@ const requireAi = (res: express.Response) => {
   return ai;
 };
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 type GeminiContents = Parameters<GoogleGenAI["models"]["generateContent"]>[0]["contents"];
 
-// Tried in order; a model that stays overloaded falls through to the next one.
+// Tried in order, fastest and most reliable first; anything overloaded falls through to the next.
 // Override with GEMINI_MODELS=model-a,model-b in .env
-const GEMINI_MODELS = (process.env.GEMINI_MODELS || "gemini-3.6-flash,gemini-3.8-flash")
+const GEMINI_MODELS = (
+  process.env.GEMINI_MODELS ||
+  "gemini-3.5-flash-lite,gemini-flash-lite-latest,gemini-3.6-flash,gemini-3.5-flash,gemini-3.8-flash"
+)
   .split(",")
   .map((m) => m.trim())
   .filter(Boolean);
 
-const REQUEST_TIMEOUT_MS = 20_000;
-// Keep the user-facing wait bounded and below the frontend proxy timeout.
-const TOTAL_BUDGET_MS = 50_000;
+const REQUEST_TIMEOUT_MS = 30_000;
+// Full passes over the model list, so a short overload spike can clear between them
+const MAX_PASSES = 2;
+const PASS_BACKOFF_MS = 3_000;
+// Keep the user-facing wait bounded and below the frontend proxy timeout (next.config.mjs).
+const TOTAL_BUDGET_MS = 100_000;
 
 // DOMException.code is a legacy DOM error number (for AbortError it's 20),
 // not an HTTP status. Treating it as a status made timed out Gemini calls
@@ -53,27 +61,50 @@ const isTransient = (error: any) => {
   return Number.isNaN(status) || status === 429 || status >= 500;
 };
 
-async function generateWithFallback(client: GoogleGenAI, contents: GeminiContents) {
+// Returns parsed JSON from the first model that gives a usable answer. Empty or malformed
+// output counts as a failed attempt, because another model can usually still answer.
+async function generateJson<T>(
+  client: GoogleGenAI,
+  contents: GeminiContents,
+  isUsable: (value: any) => boolean,
+): Promise<T> {
   let lastError: unknown;
   const deadline = Date.now() + TOTAL_BUDGET_MS;
+  const unavailable = new Set<string>();
 
-  for (const model of GEMINI_MODELS) {
-    if (Date.now() >= deadline) throw lastError ?? new Error("Gemini request budget exhausted");
-    try {
-      return await client.models.generateContent({
-        model,
-        contents,
-        config: { httpOptions: { timeout: Math.min(REQUEST_TIMEOUT_MS, deadline - Date.now()) } },
-      });
-    } catch (error: any) {
-      lastError = error;
-      // Model not available for this key: skip straight to the next one.
-      if (errorStatus(error) === 404) {
-        console.warn(`Gemini ${model} unavailable; trying next model`);
-        continue;
+  for (let pass = 1; pass <= MAX_PASSES; pass += 1) {
+    if (pass > 1) await sleep(PASS_BACKOFF_MS);
+
+    for (const model of GEMINI_MODELS) {
+      if (unavailable.has(model)) continue;
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) throw lastError ?? new Error("Gemini request budget exhausted");
+
+      try {
+        const response = await client.models.generateContent({
+          model,
+          contents,
+          config: {
+            responseMimeType: "application/json",
+            httpOptions: { timeout: Math.min(REQUEST_TIMEOUT_MS, remaining) },
+          },
+        });
+        const rawText = response.text?.replace(/```json/gi, "").replace(/```/g, "").trim();
+        const parsed = rawText ? JSON.parse(rawText) : null;
+        if (isUsable(parsed)) return parsed as T;
+        lastError = new Error(`Gemini ${model} returned an incomplete response`);
+        console.warn(`Gemini ${model} returned an incomplete response; trying next model`);
+      } catch (error: any) {
+        lastError = error;
+        // Model not available for this key: don't try it again for this request.
+        if (errorStatus(error) === 404) {
+          unavailable.add(model);
+          console.warn(`Gemini ${model} unavailable; trying next model`);
+          continue;
+        }
+        if (!(error instanceof SyntaxError) && !isTransient(error)) throw error;
+        console.warn(`Gemini ${model} failed (${errorStatus(error) || error?.name || "network"}); trying next model`);
       }
-      if (!isTransient(error)) throw error;
-      console.warn(`Gemini ${model} failed (${errorStatus(error) || error?.name || "network"}); trying next model`);
     }
   }
   throw lastError;
@@ -172,32 +203,9 @@ Use this structure:
 Ensure all required fields are included and the JSON is valid.
 `;
 
-    const response = await generateWithFallback(client, prompt);
+    const advice = await generateJson(client, prompt, (value) => Boolean(value?.summary && value?.jobOptions));
 
-    const rawText = response.text
-      ?.replace(/```json/gi, "")
-      .replace(/```/g, "")
-      .trim();
-
-    if (!rawText) {
-      return res.status(502).json({
-        message: "The AI returned an empty response",
-      });
-    }
-
-    let jsonResponse;
-
-    try {
-      jsonResponse = JSON.parse(rawText);
-    } catch {
-      console.error("Invalid Gemini JSON response:", rawText);
-
-      return res.status(502).json({
-        message: "The AI returned an invalid JSON response",
-      });
-    }
-
-    return res.json(jsonResponse);
+    return res.json(advice);
   } catch (error: any) {
     return sendAiError(res, error, "Career recommendation");
   }
@@ -303,7 +311,7 @@ Scoring rules:
 - Include multiple suggestions only when genuine improvement opportunities are identified.
 - Ensure all JSON strings are properly escaped and the response is valid JSON.
 `;
-  const response = await generateWithFallback(client, [{
+  const analysis = await generateJson(client, [{
       role:"user",
       parts:[
 
@@ -318,30 +326,9 @@ Scoring rules:
         }
       ]
 
-    }])
-  const rawText = response.text
-      ?.replace(/```json/gi, "")
-      .replace(/```/g, "")
-      .trim();
+    }], (value) => typeof value?.atsScore === "number" && Boolean(value?.scoreBreakdown))
 
-    if (!rawText) {
-      return res.status(502).json({
-        message: "The AI returned an empty response",
-      });
-    }
-    let jsonResponse;
-
-    try {
-      jsonResponse = JSON.parse(rawText);
-    } catch {
-      console.error("Invalid Gemini JSON response:", rawText);
-
-      return res.status(502).json({
-        message: "The AI returned an invalid JSON response",
-      });
-    }
-
-    return res.json(jsonResponse);
+    return res.json(analysis);
 
   }
 
