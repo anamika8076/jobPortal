@@ -19,7 +19,7 @@ What was built and fixed during the development sessions of 28–29 October 2026
 | job | Removed leftover debug logging of request bodies |
 | user | The auth middleware now loads `profile_pic_public_id`, so replacing a photo deletes the old one from Cloudinary |
 | user | Replacing a resume **keeps** the old file, because past applications still link to it |
-| utils | Gemini calls retry, fall back through several models, time out after 30 s per call and 90 s overall, and return a friendly error instead of Google's raw message |
+| utils | Gemini calls fall back between models, time out after 20 s per model and 50 s overall, and return a friendly error instead of Google's raw message |
 | utils | Fixed the PDF data-URI prefix check in the resume analyser |
 | frontend | Raised the Next.js proxy timeout to 2 minutes for slower AI responses |
 

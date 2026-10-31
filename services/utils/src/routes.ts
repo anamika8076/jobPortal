@@ -25,26 +25,30 @@ const requireAi = (res: express.Response) => {
   return ai;
 };
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 type GeminiContents = Parameters<GoogleGenAI["models"]["generateContent"]>[0]["contents"];
 
 // Tried in order; a model that stays overloaded falls through to the next one.
 // Override with GEMINI_MODELS=model-a,model-b in .env
-const GEMINI_MODELS = (process.env.GEMINI_MODELS || "gemini-3.8-flash,gemini-3.5-flash,gemini-3.7-flash")
+const GEMINI_MODELS = (process.env.GEMINI_MODELS || "gemini-3.6-flash,gemini-3.8-flash")
   .split(",")
   .map((m) => m.trim())
   .filter(Boolean);
 
-const ATTEMPTS_PER_MODEL = 2;
-const REQUEST_TIMEOUT_MS = 30_000;
-// Stay under the frontend proxy timeout (next.config.mjs proxyTimeout)
-const TOTAL_BUDGET_MS = 90_000;
+const REQUEST_TIMEOUT_MS = 20_000;
+// Keep the user-facing wait bounded and below the frontend proxy timeout.
+const TOTAL_BUDGET_MS = 50_000;
 
-const errorStatus = (error: any) => Number(error?.status ?? error?.code);
+// DOMException.code is a legacy DOM error number (for AbortError it's 20),
+// not an HTTP status. Treating it as a status made timed out Gemini calls
+// look like permanent client errors and stopped fallback handling.
+const errorStatus = (error: any) => {
+  const status = Number(error?.status ?? error?.response?.status ?? error?.code);
+  return Number.isInteger(status) && status >= 100 && status <= 599 ? status : Number.NaN;
+};
 
-// Overload, rate limit, Google-side errors and network failures are worth retrying
+// Overload, rate limit, Google-side errors and network failures can fall back to another model.
 const isTransient = (error: any) => {
+  if (error?.name === "AbortError" || error?.name === "TimeoutError") return true;
   const status = errorStatus(error);
   return Number.isNaN(status) || status === 429 || status >= 500;
 };
@@ -54,28 +58,23 @@ async function generateWithFallback(client: GoogleGenAI, contents: GeminiContent
   const deadline = Date.now() + TOTAL_BUDGET_MS;
 
   for (const model of GEMINI_MODELS) {
-    for (let attempt = 1; attempt <= ATTEMPTS_PER_MODEL; attempt += 1) {
-      if (Date.now() >= deadline) throw lastError ?? new Error("Gemini request budget exhausted");
-      try {
-        return await client.models.generateContent({
-          model,
-          contents,
-          config: { httpOptions: { timeout: Math.min(REQUEST_TIMEOUT_MS, deadline - Date.now()) } },
-        });
-      } catch (error: any) {
-        lastError = error;
-        // Model not available for this key: skip straight to the next one
-        if (errorStatus(error) === 404) break;
-        if (!isTransient(error)) throw error;
-        if (attempt < ATTEMPTS_PER_MODEL) {
-          // Back off on temporary overload/rate-limit responses before retrying.
-          const delayMs = 1000 * 2 ** (attempt - 1) + Math.random() * 250;
-          console.warn(`Gemini ${model} failed (${errorStatus(error) || "network"}); retrying in ${Math.round(delayMs)}ms`);
-          await sleep(delayMs);
-        }
+    if (Date.now() >= deadline) throw lastError ?? new Error("Gemini request budget exhausted");
+    try {
+      return await client.models.generateContent({
+        model,
+        contents,
+        config: { httpOptions: { timeout: Math.min(REQUEST_TIMEOUT_MS, deadline - Date.now()) } },
+      });
+    } catch (error: any) {
+      lastError = error;
+      // Model not available for this key: skip straight to the next one.
+      if (errorStatus(error) === 404) {
+        console.warn(`Gemini ${model} unavailable; trying next model`);
+        continue;
       }
+      if (!isTransient(error)) throw error;
+      console.warn(`Gemini ${model} failed (${errorStatus(error) || error?.name || "network"}); trying next model`);
     }
-    console.warn(`Gemini ${model} unavailable; trying next model`);
   }
   throw lastError;
 }

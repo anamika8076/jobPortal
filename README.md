@@ -151,7 +151,7 @@ Never commit `.env` files; they are gitignored. Only the `.env.example` template
 | `Frontend_Url` | auth | Base URL for reset-password links, e.g. `http://localhost:3004` |
 | `CLOUD_NAME`, `API_KEY`, `API_SECRET` | utils | Cloudinary credentials |
 | `API_KEY_GEMINI` | utils | Gemini API key. Without it, uploads still work and AI routes return 503 |
-| `GEMINI_MODELS` | utils | Optional. Comma-separated fallback order, default `gemini-3.8-flash,gemini-3.5-flash,gemini-3.7-flash` |
+| `GEMINI_MODELS` | utils | Optional. Comma-separated fallback order, default `gemini-3.6-flash,gemini-3.8-flash` |
 | `SMTP_USER`, `SMTP_PASS` | utils | Gmail address and Gmail App Password for outgoing email |
 | `NEXT_PUBLIC_AUTH_URL`, `..._USER_URL`, `..._JOB_URL`, `..._UTILS_URL` | frontend | Optional; defaults match the ports above |
 
