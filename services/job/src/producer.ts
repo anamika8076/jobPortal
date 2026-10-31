@@ -9,8 +9,18 @@ let admin: Admin;
 export const connectKafka = async () => {
     try {
         const kafka = new Kafka({
-          clientId: "auth-service",
+          clientId: "job-service",
           brokers: [process.env.kafka_broker || "localhost:9092"],
+          ...(process.env.KAFKA_SASL_USERNAME && process.env.KAFKA_SASL_PASSWORD
+            ? {
+                ssl: true,
+                sasl: {
+                  mechanism: "plain" as const,
+                  username: process.env.KAFKA_SASL_USERNAME,
+                  password: process.env.KAFKA_SASL_PASSWORD,
+                },
+              }
+            : {}),
         });
         admin = kafka.admin();
         await admin.connect();

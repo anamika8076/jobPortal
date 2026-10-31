@@ -4,6 +4,7 @@ import ErrorHandler from "../utils/errorHandler.js";
 import { TryCatch } from "../utils/tryCatch.js";
 import getBuffer from "../utils/buffer.js";
 import axios from "axios";
+import { uploadServiceUrl } from "../utils/uploadService.js";
 
 export const myProfile = TryCatch(
   async (req: AuthenticatedRequest, res, next) => {
@@ -64,7 +65,7 @@ export const updateProfilePic = TryCatch(
       throw new ErrorHandler(500, "failed to generate buffer");
     }
     const { data: uploadResult } = await axios.post(
-      `${process.env.UPLOAD_SERVICE}/api/utils/upload`,
+      uploadServiceUrl(),
       {
         buffer: fileBuffer.content,
         public_id: oldPublicId,
@@ -95,7 +96,7 @@ export const updateResume = TryCatch(
     }
     // The previous resume is not deleted: past applications still link to it
     const { data: uploadResult } = await axios.post(
-      `${process.env.UPLOAD_SERVICE}/api/utils/upload`,
+      uploadServiceUrl(),
       { buffer: fileBuffer.content },
     );
     const [updatedUser] =

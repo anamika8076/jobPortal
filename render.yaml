@@ -1,0 +1,171 @@
+services:
+  - type: web
+    name: hirely-frontend
+    runtime: node
+    rootDir: frontend
+    region: singapore
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 20.19.0
+      - key: NODE_ENV
+        value: production
+      - key: AUTH_SERVICE_URL
+        fromService:
+          type: pserv
+          name: hirely-auth
+          property: hostport
+      - key: USER_SERVICE_URL
+        fromService:
+          type: pserv
+          name: hirely-user
+          property: hostport
+      - key: JOB_SERVICE_URL
+        fromService:
+          type: pserv
+          name: hirely-job
+          property: hostport
+      - key: UTILS_SERVICE_URL
+        fromService:
+          type: pserv
+          name: hirely-utils
+          property: hostport
+
+  - type: pserv
+    name: hirely-auth
+    runtime: node
+    rootDir: services/auth
+    region: singapore
+    plan: 0.5c-512mb
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.19.0
+      - key: PORT
+        value: 3000
+      - key: DB_URL
+        sync: false
+      - key: JWT_SEC
+        generateValue: true
+      - key: Redis_url
+        fromService:
+          type: keyvalue
+          name: hirely-redis
+          property: connectionString
+      - key: UPLOAD_SERVICE
+        fromService:
+          type: pserv
+          name: hirely-utils
+          property: hostport
+      - key: kafka_broker
+        sync: false
+      - key: KAFKA_SASL_USERNAME
+        sync: false
+      - key: KAFKA_SASL_PASSWORD
+        sync: false
+      - key: Frontend_Url
+        fromService:
+          type: web
+          name: hirely-frontend
+          envVarKey: RENDER_EXTERNAL_URL
+
+  - type: pserv
+    name: hirely-user
+    runtime: node
+    rootDir: services/user
+    region: singapore
+    plan: 0.5c-512mb
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.19.0
+      - key: PORT
+        value: 3002
+      - key: DB_URL
+        sync: false
+      - key: JWT_SEC
+        fromService:
+          type: pserv
+          name: hirely-auth
+          envVarKey: JWT_SEC
+      - key: UPLOAD_SERVICE
+        fromService:
+          type: pserv
+          name: hirely-utils
+          property: hostport
+
+  - type: pserv
+    name: hirely-job
+    runtime: node
+    rootDir: services/job
+    region: singapore
+    plan: 0.5c-512mb
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.19.0
+      - key: PORT
+        value: 3003
+      - key: DB_URL
+        sync: false
+      - key: JWT_SEC
+        fromService:
+          type: pserv
+          name: hirely-auth
+          envVarKey: JWT_SEC
+      - key: UPLOAD_SERVICE
+        fromService:
+          type: pserv
+          name: hirely-utils
+          property: hostport
+      - key: kafka_broker
+        sync: false
+      - key: KAFKA_SASL_USERNAME
+        sync: false
+      - key: KAFKA_SASL_PASSWORD
+        sync: false
+
+  - type: pserv
+    name: hirely-utils
+    runtime: node
+    rootDir: services/utils
+    region: singapore
+    plan: 0.5c-512mb
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.19.0
+      - key: PORT
+        value: 3001
+      - key: CLOUD_NAME
+        sync: false
+      - key: API_KEY
+        sync: false
+      - key: API_SECRET
+        sync: false
+      - key: API_KEY_GEMINI
+        sync: false
+      - key: kafka_broker
+        sync: false
+      - key: KAFKA_SASL_USERNAME
+        sync: false
+      - key: KAFKA_SASL_PASSWORD
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+
+  - type: keyvalue
+    name: hirely-redis
+    region: singapore
+    plan: free
+    maxmemoryPolicy: noeviction
+    ipAllowList: []

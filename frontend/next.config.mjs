@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
-    // AI routes retry and fall back between Gemini models, which can exceed the 30s default
+    // Resume analysis may try more than one Gemini model before returning.
     proxyTimeout: 120_000,
   },
   images: {
@@ -17,29 +17,23 @@ const nextConfig = {
       },
     ],
   },
+  // Render Blueprint references provide private host:port values. Next rewrites
+  // and the server-side API client need an explicit protocol.
   async rewrites() {
-    const authUrl = (process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3000").replace(/\/+$/, "");
-    const userUrl = (process.env.NEXT_PUBLIC_USER_URL || "http://localhost:3002").replace(/\/+$/, "");
-    const jobUrl = (process.env.NEXT_PUBLIC_JOB_URL || "http://localhost:3003").replace(/\/+$/, "");
-    const utilsUrl = (process.env.NEXT_PUBLIC_UTILS_URL || "http://localhost:3001").replace(/\/+$/, "");
+    const serviceOrigin = (value, defaultPort) => {
+      const raw = (value || `localhost:${defaultPort}`).replace(/\/+$/, "");
+      return /^https?:\/\//i.test(raw) ? raw : `http://${raw}`;
+    };
+    const authUrl = serviceOrigin(process.env.AUTH_SERVICE_URL || process.env.NEXT_PUBLIC_AUTH_URL, 3000);
+    const userUrl = serviceOrigin(process.env.USER_SERVICE_URL || process.env.NEXT_PUBLIC_USER_URL, 3002);
+    const jobUrl = serviceOrigin(process.env.JOB_SERVICE_URL || process.env.NEXT_PUBLIC_JOB_URL, 3003);
+    const utilsUrl = serviceOrigin(process.env.UTILS_SERVICE_URL || process.env.NEXT_PUBLIC_UTILS_URL, 3001);
 
     return [
-      {
-        source: "/api/auth/:path*",
-        destination: `${authUrl}/api/auth/:path*`,
-      },
-      {
-        source: "/api/user/:path*",
-        destination: `${userUrl}/api/user/:path*`,
-      },
-      {
-        source: "/api/job/:path*",
-        destination: `${jobUrl}/api/job/:path*`,
-      },
-      {
-        source: "/api/utils/:path*",
-        destination: `${utilsUrl}/api/utils/:path*`,
-      },
+      { source: "/api/auth/:path*", destination: `${authUrl}/api/auth/:path*` },
+      { source: "/api/user/:path*", destination: `${userUrl}/api/user/:path*` },
+      { source: "/api/job/:path*", destination: `${jobUrl}/api/job/:path*` },
+      { source: "/api/utils/:path*", destination: `${utilsUrl}/api/utils/:path*` },
     ];
   },
 };

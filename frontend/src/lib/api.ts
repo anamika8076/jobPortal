@@ -9,7 +9,8 @@ function buildServiceUrl(envUrl: string | undefined, defaultPort: number, apiPat
     return apiPath;
   }
 
-  const raw = envUrl || `http://localhost:${defaultPort}`;
+  const configured = envUrl || `http://localhost:${defaultPort}`;
+  const raw = /^https?:\/\//i.test(configured) ? configured : `http://${configured}`;
   const trimmed = raw.replace(/\/+$/, "");
   if (trimmed.endsWith(apiPath)) {
     return trimmed;
@@ -17,10 +18,10 @@ function buildServiceUrl(envUrl: string | undefined, defaultPort: number, apiPat
   return `${trimmed}${apiPath}`;
 }
 
-const AUTH_URL = buildServiceUrl(process.env.NEXT_PUBLIC_AUTH_URL, 3000, "/api/auth");
-const USER_URL = buildServiceUrl(process.env.NEXT_PUBLIC_USER_URL, 3002, "/api/user");
-const JOB_URL = buildServiceUrl(process.env.NEXT_PUBLIC_JOB_URL, 3003, "/api/job");
-const UTILS_URL = buildServiceUrl(process.env.NEXT_PUBLIC_UTILS_URL, 3001, "/api/utils");
+const AUTH_URL = buildServiceUrl(process.env.AUTH_SERVICE_URL || process.env.NEXT_PUBLIC_AUTH_URL, 3000, "/api/auth");
+const USER_URL = buildServiceUrl(process.env.USER_SERVICE_URL || process.env.NEXT_PUBLIC_USER_URL, 3002, "/api/user");
+const JOB_URL = buildServiceUrl(process.env.JOB_SERVICE_URL || process.env.NEXT_PUBLIC_JOB_URL, 3003, "/api/job");
+const UTILS_URL = buildServiceUrl(process.env.UTILS_SERVICE_URL || process.env.NEXT_PUBLIC_UTILS_URL, 3001, "/api/utils");
 
 function attachAuthInterceptor(instance: AxiosInstance): AxiosInstance {
   instance.interceptors.request.use(

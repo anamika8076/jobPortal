@@ -6,6 +6,7 @@ import { sql } from "../utils/db.js";
 import ErrorHandler from "../utils/errorHandler.js";
 import { TryCatch } from "../utils/tryCatch.js";
 import axios from "axios";
+import { uploadServiceUrl } from "../utils/uploadService.js";
 
 export const createCompany = TryCatch(
   async (req: AuthenticatedRequest, res) => {
@@ -43,7 +44,7 @@ export const createCompany = TryCatch(
       throw new ErrorHandler(500, "failed to create file buffer");
     }
     const { data } = await axios.post(
-      `${process.env.UPLOAD_SERVICE}/api/utils/upload`,
+      uploadServiceUrl(),
       { buffer: fileBuffer.content },
     );
     const [newCompany] =

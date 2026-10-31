@@ -17,6 +17,7 @@ For a log of recent changes, see [docs/WORK_LOG.md](docs/WORK_LOG.md).
 - [Tech stack](#tech-stack)
 - [Project structure](#project-structure)
 - [Getting started](#getting-started)
+- [Deploy on Render](docs/DEPLOY_RENDER.md)
 - [Environment variables](#environment-variables)
 - [Features and pages](#features-and-pages)
 - [API reference](#api-reference)
