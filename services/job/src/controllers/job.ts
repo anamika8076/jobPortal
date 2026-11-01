@@ -6,7 +6,7 @@ import { sql } from "../utils/db.js";
 import ErrorHandler from "../utils/errorHandler.js";
 import { TryCatch } from "../utils/tryCatch.js";
 import axios from "axios";
-import { uploadServiceUrl } from "../utils/uploadService.js";
+import { uploadServiceConfig, uploadServiceUrl } from "../utils/uploadService.js";
 
 export const createCompany = TryCatch(
   async (req: AuthenticatedRequest, res) => {
@@ -46,6 +46,7 @@ export const createCompany = TryCatch(
     const { data } = await axios.post(
       uploadServiceUrl(),
       { buffer: fileBuffer.content },
+      uploadServiceConfig(),
     );
     const [newCompany] =
       await sql`INSERT INTO companies (name, description, website, logo, logo_public_id, recruiter_id) VALUES (${name}, ${description}, ${website}, ${data.url}, ${data.public_id}, ${user.user_id})

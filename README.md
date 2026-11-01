@@ -145,7 +145,8 @@ Never commit `.env` files; they are gitignored. Only the `.env.example` template
 |---|---|---|
 | `PORT` | all services | 3000 auth, 3001 utils, 3002 user, 3003 job |
 | `DB_URL` | auth, user, job | Neon connection string (same value in all three) |
-| `JWT_SEC` | auth, user, job | JWT signing secret (**must be identical** in all three) |
+| `JWT_SEC` | auth, user, job, utils | JWT signing secret (**must be identical** in all four) |
+| `INTERNAL_API_KEY` | auth, user, job, utils | Secret that lets services call the utils upload route (**must be identical** in all four) |
 | `UPLOAD_SERVICE` | auth, user, job | utils base URL, e.g. `http://localhost:3001` |
 | `kafka_broker` | auth, job, utils | e.g. `localhost:9092` |
 | `Redis_url` | auth | Redis URL for password-reset tokens |
@@ -240,9 +241,9 @@ All routes go through the frontend at `/api/<service>/...`. "Auth" means the req
 
 | Method | Path | Description |
 |---|---|---|
-| POST | `/upload` | `{ buffer, public_id? }`. Data URI upload to Cloudinary; deletes `public_id` first if given. Called by the other services |
-| POST | `/career` | `{ skills }`. AI career suggestions as JSON |
-| POST | `/resume-analyser` | `{ pdfBase64 }`. AI ATS score, breakdown, strengths and suggestions |
+| POST | `/upload` | Requires the `x-internal-key` header. `{ buffer, public_id? }`. Data URI upload to Cloudinary; deletes `public_id` first if given. Called by the other services |
+| POST | `/career` | Requires login. `{ skills }`. AI career suggestions as JSON |
+| POST | `/resume-analyser` | Requires login. `{ pdfBase64 }`. AI ATS score, breakdown, strengths and suggestions |
 
 AI routes try each model in `GEMINI_MODELS`, then make a second pass (100 s budget). Empty or malformed AI output counts as a failed attempt. If every model fails they return `503` with a friendly message.
 
@@ -283,7 +284,6 @@ Enums:
 
 ## Known limitations
 
-- The utils routes (`/upload`, `/career`, `/resume-analyser`) have no authentication.
 - There is no refresh token; a session lasts 15 days and then requires a new login.
 - Application statuses are only Submitted, Rejected and Hired: no shortlist or interview stages, and no status history.
 - Companies can't be edited after creation (no update endpoint).

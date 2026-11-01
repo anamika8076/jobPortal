@@ -2,6 +2,7 @@
 import express from "express";
 import cloudinary from "cloudinary";
 import { GoogleGenAI } from "@google/genai";
+import { requireInternalKey, requireUser } from "./auth.js";
 
 const router = express.Router();
 
@@ -122,7 +123,7 @@ function sendAiError(res: express.Response, error: any, label: string) {
 }
 
 // Cloudinary upload route
-router.post("/upload", async (req, res) => {
+router.post("/upload", requireInternalKey, async (req, res) => {
   try {
     const { buffer, public_id } = req.body;
 
@@ -152,7 +153,7 @@ router.post("/upload", async (req, res) => {
 });
 
 // Career recommendation route
-router.post("/career", async (req, res) => {
+router.post("/career", requireUser, async (req, res) => {
   try {
     const client = requireAi(res);
     if (!client) return;
@@ -214,7 +215,7 @@ Ensure all required fields are included and the JSON is valid.
 
 
 
-router.post("/resume-analyser",async(req,res)=>{
+router.post("/resume-analyser", requireUser, async(req,res)=>{
   try {
     const client = requireAi(res)
     if (!client) return

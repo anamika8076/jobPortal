@@ -4,7 +4,7 @@ import ErrorHandler from "../utils/errorHandler.js";
 import { TryCatch } from "../utils/tryCatch.js";
 import getBuffer from "../utils/buffer.js";
 import axios from "axios";
-import { uploadServiceUrl } from "../utils/uploadService.js";
+import { uploadServiceConfig, uploadServiceUrl } from "../utils/uploadService.js";
 
 export const myProfile = TryCatch(
   async (req: AuthenticatedRequest, res, next) => {
@@ -70,6 +70,7 @@ export const updateProfilePic = TryCatch(
         buffer: fileBuffer.content,
         public_id: oldPublicId,
       },
+      uploadServiceConfig(),
     );
     const [updatedUser] =
       await sql`UPDATE users SET profile_pic=${uploadResult.url}, profile_pic_public_id=${uploadResult.public_id} WHERE user_id=${user.user_id} RETURNING user_id,name,profile_pic,profile_pic_public_id;`;
@@ -98,6 +99,7 @@ export const updateResume = TryCatch(
     const { data: uploadResult } = await axios.post(
       uploadServiceUrl(),
       { buffer: fileBuffer.content },
+      uploadServiceConfig(),
     );
     const [updatedUser] =
       await sql`UPDATE users SET resume=${uploadResult.url}, resume_public_id=${uploadResult.public_id} WHERE user_id=${user.user_id} RETURNING user_id,name,resume,resume_public_id;`;

@@ -52,6 +52,8 @@ services:
         sync: false
       - key: JWT_SEC
         generateValue: true
+      - key: INTERNAL_API_KEY
+        generateValue: true
       - key: Redis_url
         fromService:
           type: keyvalue
@@ -94,6 +96,11 @@ services:
           type: web
           name: hirely-auth
           envVarKey: JWT_SEC
+      - key: INTERNAL_API_KEY
+        fromService:
+          type: web
+          name: hirely-auth
+          envVarKey: INTERNAL_API_KEY
       - key: UPLOAD_SERVICE
         fromService:
           type: web
@@ -120,6 +127,11 @@ services:
           type: web
           name: hirely-auth
           envVarKey: JWT_SEC
+      - key: INTERNAL_API_KEY
+        fromService:
+          type: web
+          name: hirely-auth
+          envVarKey: INTERNAL_API_KEY
       - key: UPLOAD_SERVICE
         fromService:
           type: web
@@ -145,6 +157,16 @@ services:
         value: 20.19.0
       - key: PORT
         value: 3001
+      - key: JWT_SEC
+        fromService:
+          type: web
+          name: hirely-auth
+          envVarKey: JWT_SEC
+      - key: INTERNAL_API_KEY
+        fromService:
+          type: web
+          name: hirely-auth
+          envVarKey: INTERNAL_API_KEY
       - key: CLOUD_NAME
         sync: false
       - key: API_KEY

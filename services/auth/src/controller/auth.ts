@@ -8,7 +8,7 @@ import jwt from "jsonwebtoken";
 import { forgotPasswordTemplate } from "../template.js";
 import { publishToKafka } from "../producer.js";
 import { redisClient } from "../index.js";
-import { uploadServiceUrl } from "../utils/uploadService.js";
+import { uploadServiceConfig, uploadServiceUrl } from "../utils/uploadService.js";
 
 export const registerUser = TryCatch(async (req, res) => {
   const { name, email, password, phoneNumber, role, bio } = req.body;
@@ -41,6 +41,7 @@ export const registerUser = TryCatch(async (req, res) => {
     const { data } = await axios.post(
       uploadServiceUrl(),
       { buffer: fileBuffer.content },
+      uploadServiceConfig(),
     );
 
     const [user] =
