@@ -12,6 +12,9 @@ export const redisClient = createClient({
   url:process.env.Redis_url,
 })
 
+// Without a listener, a dropped Redis connection crashes the whole service. The client reconnects by itself.
+redisClient.on("error", (error) => console.error("Redis error:", error.message));
+
 redisClient.connect().then(()=>console.log("connected to redis")).catch(console.error)
 
 async function initDb() {
