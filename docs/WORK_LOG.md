@@ -56,10 +56,17 @@ The old `/profile`, `/applications` and `/ai` pages now redirect to the right pa
 
 Every change was type-checked (`tsc --noEmit`) for the frontend and the affected services, and the frontend production build (`next build`) passed. Routes were smoke-tested against the running dev servers. There are no automated tests in the project yet.
 
+## 8. Deployment and hardening (31 October to 1 November 2026)
+
+- Deployed to one AWS EC2 server with PM2, Caddy for HTTPS, and Kafka running locally. The steps and lessons are in the [README](../README.md#deploying-on-aws).
+- `/api/utils/upload` now requires a shared `INTERNAL_API_KEY`, and the AI routes require login.
+- AI requests try faster models first, make a second pass, and treat malformed AI output as a failed attempt.
+- Fixed an auth crash caused by a Redis client with no `error` listener.
+
 ## Open follow-ups
 
+- Add rate limiting to the AI routes.
 - Rotate the database, JWT and Redis credentials that were exposed in git history.
-- Add authentication to the utils routes.
 - Fix the duplicate-apply error code (`2305` should be `23505`) in `services/user/src/controllers/user.ts`.
 - Add an `SMTP_HOST`/`SMTP_PORT`/`SMTP_FROM` setting so production can use a transactional email provider.
 - Consider a backend endpoint for recruiter dashboard data, server-side pagination for `/api/job/all`, and automated tests.
