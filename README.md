@@ -7,7 +7,6 @@ Hirely is a job portal with two kinds of accounts:
 
 The backend is four Node.js/Express microservices sharing one PostgreSQL (Neon) database. The frontend is a Next.js app.
 
-For a log of recent changes, see [docs/WORK_LOG.md](docs/WORK_LOG.md).
 
 ---
 
@@ -24,7 +23,7 @@ For a log of recent changes, see [docs/WORK_LOG.md](docs/WORK_LOG.md).
 - [API reference](#api-reference)
 - [Data model](#data-model)
 - [How the pieces work together](#how-the-pieces-work-together)
-- [Known limitations](#known-limitations)
+
 
 ---
 
@@ -345,34 +344,9 @@ free -h
 
 Then test login, a photo upload, registering a job seeker with a resume, Forgot Password (including the spam folder) and Resume Check. Without a login, `POST /api/utils/upload` and the AI routes should return `401`.
 
-### Troubleshooting
 
-| Symptom | Cause | Fix |
-|---|---|---|
-| `ssh` times out, while port 80 answers | Your public IP changed, so the firewall blocks port 22 | Update the SSH rule, or use the browser terminal |
-| Stuck at a `>` prompt after pasting | A `<<'EOF'` block was cut off by the paste, so later commands become text | Press `Ctrl + C`. Prefer `printf` blocks, as in this guide |
-| A build looks frozen at "Linting and checking validity of types" | The connection dropped and killed the build | Run `ps aux \| grep next`. If nothing is running, rebuild with `nohup` |
-| `Permission denied (publickey)` | Wrong key, or the key's permissions are too open | `chmod 400 your-key.pem`, and check you're using the right file |
-| Mumbai or another region says "unavailable" | The Free plan project is assigned to one region | Stay in the assigned region. Don't upgrade |
-| Login works locally but not on the server | Site opened over HTTP, so the `secure` cookie isn't saved | Open it over HTTPS |
-| No emails, but Forgot Password says a link was sent | Kafka isn't running, or SMTP values are missing. The page shows success either way | Check `systemctl is-active kafka` and `SMTP_USER`/`SMTP_PASS`, then `pm2 restart hirely-auth hirely-job hirely-utils` |
-| `ECONNREFUSED 127.0.0.1:9092` in logs | Kafka was down when the service started | Check the log's timestamp first, because old errors stay in the log. Start Kafka and restart the services |
-| Uploads return `401` | `INTERNAL_API_KEY` is missing or differs between services | Set the same value in all four `.env` files and restart |
-| AI routes return `401` for a logged-in user | `JWT_SEC` in utils differs from auth | Copy the value from auth and restart utils |
-| AI routes return `503` | Every Gemini model is busy, or the quota is used up | Retry shortly. Reorder `GEMINI_MODELS` or use a paid key if it keeps happening |
-| HTTPS certificate error on a new domain | The name doesn't point at the server yet | Wait, then run `sudo systemctl restart caddy` |
 
-### Deployment lessons
 
-- **Measure before blaming.** Timeouts on different ports told us firewall from app, and timestamps told us old log errors from new ones. "Connection refused" means the server is reachable with nothing listening; "timed out" usually means a firewall.
-- **Long jobs shouldn't depend on your connection.** Use `nohup` on anything slow, especially on mobile or unstable networks.
-- **Check every service's dependencies on startup.** Services that connect to Kafka once at startup need a restart after Kafka comes up.
-- **Handle connection errors.** A Redis client with no `error` listener crashed the auth service whenever the connection dropped.
-- **Give small servers limits.** Swap and a capped Kafka heap let everything fit in 2 GB.
-- **Expose as little as possible.** Only 80 and 443 need to be public. Remember that the Next.js proxy makes every `/api/*` route public, so each route needs its own protection.
-- **Secrets stay out of git, and leaked ones must be rotated.** Removing a committed `.env` doesn't remove it from history.
-
-For a Render deployment instead, see [docs/DEPLOY_RENDER.md](docs/DEPLOY_RENDER.md).
 
 ## Features and pages
 
@@ -499,14 +473,3 @@ Enums:
 
 **Recruiter data.** There is no single dashboard endpoint, so `RecruiterDataContext` loads companies, then each company's jobs, then each job's applications, and every dashboard page reads from it.
 
-## Known limitations
-
-- There is no refresh token; a session lasts 15 days and then requires a new login.
-- Application statuses are only Submitted, Rejected and Hired: no shortlist or interview stages, and no status history.
-- Companies can't be edited after creation (no update endpoint).
-- Pagination is client-side; `/api/job/all` returns every active job.
-- Applying twice to the same job returns a generic error instead of "already applied" (the user service checks the wrong Postgres error code).
-- Gmail SMTP suits development only; production should use a transactional email provider.
-- Forgot Password reports success even if the email can't be queued, for example when Kafka is down.
-- There is no rate limiting, so any logged-in user can make unlimited AI requests against the Gemini quota.
-- There are no automated tests.
